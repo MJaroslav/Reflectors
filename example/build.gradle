@@ -35,7 +35,7 @@ def buildprop = new Properties()
 file("build.properties").withInputStream { buildprop.load(it) }
 
 version = buildprop.version
-group = buildprop.group
+group = buildprop.group + ".example"
 archivesBaseName = "[${buildprop.game_version}]-${buildprop.name}"
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
