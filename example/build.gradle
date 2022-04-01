@@ -36,8 +36,6 @@ file("build.properties").withInputStream { buildprop.load(it) }
 
 version = buildprop.version
 group = buildprop.group
-// Your archive name must come before in alphabetical order the name of the archive you are patching
-archivesBaseName = "[${buildprop.game_version}]-${buildprop.name}"
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'

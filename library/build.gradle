@@ -3,7 +3,6 @@ file("build.properties").withInputStream { buildprop.load(it) }
 
 version = buildprop.version
 group = buildprop.group
-archivesBaseName = buildprop.name
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
