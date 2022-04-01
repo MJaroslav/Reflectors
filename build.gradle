@@ -14,6 +14,7 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
+    apply plugin: 'maven-publish'
 
     idea.module.inheritOutputDirs = true
 
@@ -36,5 +37,16 @@ subprojects {
 
     artifacts {
         archives sourcesJar
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId project.group
+                artifactId project.name
+                version project.version
+                from components.java
+            }
+        }
     }
 }
