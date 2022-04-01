@@ -22,7 +22,7 @@
 package com.github.mjaroslav.reflectors.example;
 
 import com.github.mjaroslav.reflectors.example.reflector.BlockStoneReflector;
-import com.github.mjaroslav.reflectors.v0.Reflectors;
+import com.github.mjaroslav.reflectors.v1.Reflectors;
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 import net.minecraft.launchwrapper.IClassTransformer;
 

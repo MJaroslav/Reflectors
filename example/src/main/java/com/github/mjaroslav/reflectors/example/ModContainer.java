@@ -1,7 +1,20 @@
 package com.github.mjaroslav.reflectors.example;
 
-import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.DummyModContainer;
 
-@Mod(name = "ReflectorsExample", version = "@VERSION@", modid = "reflectorsexample")
-public class ModContainer {
+public class ModContainer extends DummyModContainer {
+    @Override
+    public String getModId() {
+        return "reflectorsexample";
+    }
+
+    @Override
+    public String getName() {
+        return "ReflectorsExample";
+    }
+
+    @Override
+    public String getVersion() {
+        return "@VERSION@";
+    }
 }

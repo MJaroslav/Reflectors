@@ -35,11 +35,18 @@ def buildprop = new Properties()
 file("build.properties").withInputStream { buildprop.load(it) }
 
 version = buildprop.version
-group = buildprop.group + ".example"
+group = buildprop.group
+// Your archive name must come before in alphabetical order the name of the archive you are patching
 archivesBaseName = "[${buildprop.game_version}]-${buildprop.name}"
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+
+configurations {
+    shade
+
+    compile.extendsFrom(shade)
+}
 
 minecraft {
     version = "${buildprop.game_version}-${buildprop.forge_version}-${buildprop.game_version}"
@@ -48,7 +55,7 @@ minecraft {
 }
 
 dependencies {
-    shade project(":")
+    shade project(":library")
 }
 
 task devJar(type: Jar) {
@@ -76,10 +83,14 @@ processResources {
 tasks.withType(Jar)*.doFirst {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     includeEmptyDirs = false
-    if (name == "jar" || name == "devJar" || name == "sourcesJar")
+    if (name == "jar" || name == "devJar" || name == "sourcesJar") {
         manifest {
             // TODO: Don't forged about -Dfml.coreMods.load
             attributes "FMLCorePlugin": "${project.group}.example.ReflectorsExamplePlugin"
             attributes "FMLCorePluginContainsFMLMod": "true"
         }
+        configurations.shade.each { dep ->
+            from project.zipTree(dep)
+        }
+    }
 }

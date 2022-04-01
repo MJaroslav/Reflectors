@@ -1,7 +1,7 @@
 package com.github.mjaroslav.reflectors.example;
 
 import com.github.mjaroslav.reflectors.example.reflector.BlockStoneReflector;
-import com.github.mjaroslav.reflectors.v0.Reflectors;
+import com.github.mjaroslav.reflectors.v1.Reflectors;
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 import net.minecraft.launchwrapper.IClassTransformer;
 
@@ -11,6 +11,7 @@ import net.minecraft.launchwrapper.IClassTransformer;
  * @see Reflectors.FMLLoadingPluginAdapter
  */
 @IFMLLoadingPlugin.MCVersion("1.7.10")
+// You should use this index (> 1000) for SRG names while patching
 @IFMLLoadingPlugin.SortingIndex(1001)
 @IFMLLoadingPlugin.Name("ReflectorsExamplePlugin")
 public class ReflectorsExamplePlugin extends Reflectors.FMLLoadingPluginAdapter
@@ -22,6 +23,11 @@ public class ReflectorsExamplePlugin extends Reflectors.FMLLoadingPluginAdapter
     @Override
     public String[] getASMTransformerClass() {
         return new String[]{getClass().getName()};
+    }
+
+    @Override
+    public String getModContainerClass() {
+        return ModContainer.class.getName();
     }
 
     @Override
