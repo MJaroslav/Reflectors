@@ -1,4 +1,4 @@
 rootProject.name="Reflectors"
 
-include ":library"
-include ":example"
+include "library"
+include "example"
