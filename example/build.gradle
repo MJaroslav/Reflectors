@@ -25,9 +25,7 @@ minecraft {
 }
 
 dependencies {
-    shade(project(":library")) {
-        transitive = false
-    }
+    shade project(":library")
 }
 
 task devJar(type: Jar) {
