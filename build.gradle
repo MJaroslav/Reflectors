@@ -1,20 +1,48 @@
 def buildprop = new Properties()
 file("build.properties").withInputStream { buildprop.load(it) }
 
+allprojects {
+    version = buildprop.version
+    group = buildprop.group
+}
+
 subprojects {
     buildscript {
         repositories {
+            maven {
+                name 'jitpack'
+                url 'https://jitpack.io'
+            }
+            maven {
+                name = "github"
+                url = "https://github.com/juanmuscaria/maven/raw/master"
+            }
             mavenCentral()
         }
     }
 
     repositories {
+        maven {
+            name 'ProfMobius Repo'
+            url 'http://mobiusstrip.eu/maven'
+        }
+        maven {
+            name 'ChickenBones Repo'
+            url 'https://chickenbones.net/maven/'
+        }
+        maven {
+            name 'jitpack'
+            url 'https://jitpack.io'
+        }
         mavenCentral()
     }
 
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'maven-publish'
+
+    [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+    sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
     idea.module.inheritOutputDirs = true
 

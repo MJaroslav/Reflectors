@@ -1,9 +1,6 @@
 def buildprop = new Properties()
 file("build.properties").withInputStream { buildprop.load(it) }
 
-version = buildprop.version
-group = buildprop.group
-
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
@@ -19,7 +16,3 @@ dependencies {
     testCompile "org.ow2.asm:asm-debug-all:${buildprop.asm_version}"
     testCompile "com.google.guava:guava:${buildprop.guava_version}"
 }
-
-//test {
-//    useJUnitPlatform()
-//}

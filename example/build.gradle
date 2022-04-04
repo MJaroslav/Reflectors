@@ -1,31 +1,6 @@
 buildscript {
-    repositories {
-        maven {
-            name 'jitpack'
-            url 'https://jitpack.io'
-        }
-        maven {
-            name = "github"
-            url = "https://github.com/juanmuscaria/maven/raw/master"
-        }
-    }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:[1.2-1.4.6-SNAPSHOT,)'
-    }
-}
-
-repositories {
-    maven {
-        name 'ProfMobius Repo'
-        url 'http://mobiusstrip.eu/maven'
-    }
-    maven {
-        name 'ChickenBones Repo'
-        url 'https://chickenbones.net/maven/'
-    }
-    maven {
-        name 'jitpack'
-        url 'https://jitpack.io'
     }
 }
 
@@ -33,9 +8,6 @@ apply plugin: 'forge'
 
 def buildprop = new Properties()
 file("build.properties").withInputStream { buildprop.load(it) }
-
-version = buildprop.version
-group = buildprop.group
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
@@ -53,7 +25,9 @@ minecraft {
 }
 
 dependencies {
-    shade project(":library")
+    shade(project(":library")) {
+        transitive = false
+    }
 }
 
 task devJar(type: Jar) {
