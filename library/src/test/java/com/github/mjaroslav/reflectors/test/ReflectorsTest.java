@@ -2,7 +2,7 @@ package com.github.mjaroslav.reflectors.test;
 
 import com.github.mjaroslav.reflectors.test.util.TestClassLoader;
 import com.github.mjaroslav.reflectors.test.util.Utils;
-import com.github.mjaroslav.reflectors.v1.Reflectors;
+import com.github.mjaroslav.reflectors.v2.Reflectors;
 import lombok.val;
 import lombok.var;
 import org.junit.Assert;
@@ -93,6 +93,18 @@ public class ReflectorsTest {
     public void reflectMethodStatic() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         Assert.assertEquals(PATCH_ERROR, -300, (int) Utils.findAndInvokeMethod(testClass, "methodStatic",
                 testClassInstance));
+    }
+
+    @Test
+    public void reflectMethodManyArgs() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        Assert.assertEquals(PATCH_ERROR, 1, (int) Utils.findAndInvokeMethod(testClass, "methodManyArgs",
+                testClassInstance, -1, 1));
+    }
+
+    @Test
+    public void reflectMethodStaticArgs() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        Assert.assertEquals(PATCH_ERROR, -1, (int) Utils.findAndInvokeMethod(testClass, "methodStaticArgs",
+                testClassInstance, 1));
     }
 
     @Test

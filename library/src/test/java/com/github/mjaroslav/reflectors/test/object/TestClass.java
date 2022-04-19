@@ -45,7 +45,15 @@ public class TestClass {
         throw new RuntimeException();
     }
 
+    public int methodManyArgs(int first, int second) {
+        return first;
+    }
+
     public static int methodStatic() {
         return 300;
+    }
+
+    public static int methodStaticArgs(int arg) {
+        return arg;
     }
 }

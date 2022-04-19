@@ -45,7 +45,15 @@ public class TestClassReflector {
     public static void methodUnmapped(@NotNull TestClass instance) {
     }
 
+    public static int methodManyArgs(@NotNull TestClass instance, int first, int second) {
+        return second;
+    }
+
     public static int methodStatic() {
         return -300;
+    }
+
+    public static int methodStaticArgs(int arg) {
+        return -arg;
     }
 }

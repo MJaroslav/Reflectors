@@ -3,7 +3,7 @@
  * с любым изменением класса. Это необходимо для того, чтобы избежать конфликтов,
  * когда библиотека встроена в несколько бинарников.
  */
-package com.github.mjaroslav.reflectors.v1;
+package com.github.mjaroslav.reflectors.v2;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -229,9 +229,8 @@ public class Reflectors {
     public void loadMethodArguments(@NotNull InsnList insnList, Type[] arguments, boolean isStatic) {
         if (!isStatic) // Add this for non-static method reflections
             insnList.add(new VarInsnNode(Opcodes.ALOAD, 0));
-
         for (var i = 0; i < arguments.length; i++)
-            insnList.add(new VarInsnNode(getLoadOpcodeForType(arguments[i]), i + 1));
+            insnList.add(new VarInsnNode(getLoadOpcodeForType(arguments[i]), i + (isStatic ? 0 : 1)));
     }
 
     /**
