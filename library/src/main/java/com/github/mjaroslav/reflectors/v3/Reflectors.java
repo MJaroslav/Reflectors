@@ -107,7 +107,7 @@ public class Reflectors {
     public @NotNull ClassNode readClass(@NotNull String clazz) throws IOException {
         val classNode = new ClassNode();
         val is = Objects.requireNonNull(
-                Reflectors.class.getResourceAsStream("" + clazz.replace('.', '/') + ".class"));
+                Reflectors.class.getResourceAsStream("/" + clazz.replace('.', '/') + ".class"));
         val classReader = new ClassReader(is);
         is.close();
         classReader.accept(classNode, 0);

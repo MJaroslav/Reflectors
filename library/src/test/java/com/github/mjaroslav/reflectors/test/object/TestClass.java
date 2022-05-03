@@ -2,7 +2,7 @@ package com.github.mjaroslav.reflectors.test.object;
 
 public class TestClass {
     public int methodInt() {
-        return -5;
+        return 5;
     }
 
     public void methodVoid() {
