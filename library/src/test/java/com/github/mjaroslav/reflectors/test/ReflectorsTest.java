@@ -2,7 +2,7 @@ package com.github.mjaroslav.reflectors.test;
 
 import com.github.mjaroslav.reflectors.test.util.TestClassLoader;
 import com.github.mjaroslav.reflectors.test.util.Utils;
-import com.github.mjaroslav.reflectors.v3.Reflectors;
+import com.github.mjaroslav.reflectors.v4.Reflectors;
 import lombok.val;
 import lombok.var;
 import org.junit.Assert;

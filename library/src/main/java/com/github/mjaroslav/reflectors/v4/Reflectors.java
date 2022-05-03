@@ -3,7 +3,7 @@
  * с любым изменением класса. Это необходимо для того, чтобы избежать конфликтов,
  * когда библиотека встроена в несколько бинарников.
  */
-package com.github.mjaroslav.reflectors.v3;
+package com.github.mjaroslav.reflectors.v4;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -22,9 +22,7 @@ import org.objectweb.asm.tree.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @UtilityClass
 public class Reflectors {
@@ -117,7 +115,7 @@ public class Reflectors {
     /**
      * Прочесть ClassNode класса без его загрузки.
      *
-     * @param clazz имя класса.
+     * @param clazz  имя класса.
      * @param loader загрузчик классов, откуда брать рефлектор
      * @return ClassNode указанного класса.
      */
@@ -155,9 +153,10 @@ public class Reflectors {
     public @Nullable MethodNode findMethodNode(@NotNull ClassNode classNode, @NotNull String methodName,
                                                @NotNull String methodDesc) {
         for (var method : classNode.methods)
-            if ((method.name.equals(methodName) || method.name.equals(unmapMethod(methodName))) &&
-                    method.desc.equals(methodDesc))
-                return method;
+            for (var unmappedName : unmapMethodAll(methodName))
+                if ((method.name.equals(methodName) || method.name.equals(unmappedName)) &&
+                        method.desc.equals(methodDesc))
+                    return method;
         return null;
     }
 
@@ -337,7 +336,12 @@ public class Reflectors {
             var line = reader.readLine();
             while (line != null) {
                 splitted = line.split(",");
-                target.put(splitted[1], splitted[0]);
+                val mapped = splitted[0];
+                var unmapped = splitted[1];
+                while (METHODS.containsKey(unmapped)) // В данном случае я считаю StringBuilder избыточным,
+                    // так как повторок максимум одна-две на имя
+                    unmapped += "*";
+                target.put(unmapped, mapped);
                 line = reader.readLine();
             }
             reader.close();
@@ -352,7 +356,26 @@ public class Reflectors {
      * @return преобразованное имя, либо оно само, если его нет в маппингах.
      */
     public @NotNull String unmapMethod(@NotNull String name) {
-        return obfuscated ? METHODS.getOrDefault(name, name) : name;
+        return unmapMethodAll(name).get(0);
+    }
+
+    /**
+     * Преобразовать имя метода из SRG в имя маппингов.
+     *
+     * @param name имя метода для преобразования.
+     * @return список преобразованных имен, либо оно само, если его нет в маппингах.
+     */
+    public @NotNull List<String> unmapMethodAll(@NotNull String name) {
+        if (!obfuscated)
+            return Collections.singletonList(name);
+        val result = new ArrayList<String>();
+        while (METHODS.containsKey(name)) {
+            result.add(METHODS.get(name));
+            name += "*";
+        }
+        if (result.isEmpty())
+            result.add(name);
+        return result;
     }
 
     // TODO: Fields getters and setters
@@ -367,7 +390,7 @@ public class Reflectors {
      * @return преобразованное имя, либо оно само, если его нет в маппингах.
      */
     public @NotNull String mapMethod(@NotNull String name) {
-        return obfuscated ? METHODS.inverse().getOrDefault(name, name) : name;
+        return obfuscated ? METHODS.inverse().getOrDefault(name, name).replace('*', ' ') : name;
     }
 
     // TODO: Fields getters and setters
