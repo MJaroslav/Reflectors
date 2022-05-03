@@ -3,7 +3,7 @@
  * с любым изменением класса. Это необходимо для того, чтобы избежать конфликтов,
  * когда библиотека встроена в несколько бинарников.
  */
-package com.github.mjaroslav.reflectors.v2;
+package com.github.mjaroslav.reflectors.v3;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 @UtilityClass
 public class Reflectors {
@@ -105,7 +106,27 @@ public class Reflectors {
      */
     public @NotNull ClassNode readClass(@NotNull String clazz) throws IOException {
         val classNode = new ClassNode();
-        val classReader = new ClassReader(clazz);
+        val is = Objects.requireNonNull(
+                Reflectors.class.getResourceAsStream("" + clazz.replace('.', '/') + ".class"));
+        val classReader = new ClassReader(is);
+        is.close();
+        classReader.accept(classNode, 0);
+        return classNode;
+    }
+
+    /**
+     * Прочесть ClassNode класса без его загрузки.
+     *
+     * @param clazz имя класса.
+     * @param loader загрузчик классов, откуда брать рефлектор
+     * @return ClassNode указанного класса.
+     */
+    public @NotNull ClassNode readClass(@NotNull String clazz, @NotNull ClassLoader loader) throws IOException {
+        val classNode = new ClassNode();
+        val is = Objects.requireNonNull(
+                loader.getResourceAsStream("" + clazz.replace('.', '/') + ".class"));
+        val classReader = new ClassReader(is);
+        is.close();
         classReader.accept(classNode, 0);
         return classNode;
     }
