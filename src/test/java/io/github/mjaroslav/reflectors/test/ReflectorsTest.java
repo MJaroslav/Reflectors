@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @SuppressWarnings("ConstantConditions")
 class ReflectorsTest {
-    static final String TEST_CLASS = "io.github.mjaroslav.reflectors.test.TestClass";
-    static final String TEST_CLASS_REFLECTOR = "io.github.mjaroslav.reflectors.test.TestClassReflector";
+    static final String TEST_CLASS = "io.github.mjaroslav.reflectors.test.object.TestClass";
+    static final String TEST_CLASS_REFLECTOR = "io.github.mjaroslav.reflectors.test.object.TestClassReflector";
     static final String PATCH_ERROR = "Method not patched!";
 
     static Object testClassInstance;
@@ -24,6 +24,7 @@ class ReflectorsTest {
         val classLoader = new TestClassLoader();
         var bytes = Utils.loadClassBytes(TEST_CLASS);
         Reflectors.obfuscated = true;
+        Reflectors.enabledLogs = true;
         bytes = Reflectors.reflectClass(bytes, TEST_CLASS, TEST_CLASS_REFLECTOR);
         testClass = classLoader.defineClass(TEST_CLASS, bytes);
         testClassInstance = testClass.getConstructor().newInstance();
@@ -55,7 +56,7 @@ class ReflectorsTest {
 
     @Test
     void test$reflectMethodBoolean() throws Exception {
-        assertFalse(Utils.findAndInvokeMethod(testClass, "methodBoolean", testClassInstance), PATCH_ERROR);
+        assertFalse((boolean) Utils.findAndInvokeMethod(testClass, "methodBoolean", testClassInstance), PATCH_ERROR);
     }
 
     @Test

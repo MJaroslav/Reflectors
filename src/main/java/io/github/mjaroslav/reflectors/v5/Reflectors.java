@@ -17,10 +17,15 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
+import org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @UtilityClass
@@ -33,6 +38,10 @@ public class Reflectors {
      * Ставим true, когда мод выполняется не в dev среде.
      */
     public boolean obfuscated;
+    /**
+     * Ставив true для вывода байткода классов в папку asm/reflectors.
+     */
+    public boolean printClasses;
 
     /**
      * Отражаем целевой класс классом-отражателем. Все декларированные методы из целевого
@@ -52,14 +61,17 @@ public class Reflectors {
         log("Trying reflect target class \"" + target + "\" with \"" + reflectorClass + "\" reflector class...");
         try {
             val classNode = readClassFromBytes(data);
+            if (printClasses)
+                printClassNode(classNode, Paths.get("asm", "reflectors", classNode.name.replace("/", ".") + ".original.txt"));
             val reflectorClassNode = readClass(reflectorClass);
-            for (var method : reflectorClassNode.methods)
-                if ((method.access & Opcodes.ACC_STATIC) == Opcodes.ACC_STATIC &&
-                    (method.access & Opcodes.ACC_PUBLIC) == Opcodes.ACC_PUBLIC) {
-                    log("Found method \"" + method.name + method.desc + "\" trying to replace in target class...");
-                    reflectMethod(classNode, reflectorClassNode, method);
-                }
+            for (var method : reflectorClassNode.methods) {
+                if (method.name.contains("<init>")) continue; // Ignore constructors
+                log("Found method \"" + method.name + method.desc + "\" trying to replace in target class...");
+                reflectMethod(classNode, reflectorClassNode, method);
+            }
             log("Reflection done!");
+            if (printClasses)
+                printClassNode(classNode, Paths.get("asm", "reflectors", classNode.name.replace("/", ".") + ".txt"));
             return writeClassToBytes(classNode, ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
         } catch (Exception e) {
             log("Error while class reflecting:");
@@ -202,7 +214,7 @@ public class Reflectors {
      * @return первая инструкция тела метода, либо null в случае неудачи.
      */
     @UnknownNullability
-    public AbstractInsnNode findFirstInstruction(MethodNode method) {
+    public AbstractInsnNode findFirstInstruction(@NotNull MethodNode method) {
         for (var instruction = method.instructions.getFirst(); instruction != null;
              instruction = instruction.getNext())
             if (instruction.getType() != AbstractInsnNode.LABEL && instruction.getType() != AbstractInsnNode.LINE)
@@ -238,6 +250,16 @@ public class Reflectors {
         log("Method replaced");
     }
 
+    public void printClassNode(@NotNull ClassNode classNode, @NotNull Path path) {
+        try {
+            Files.createDirectories(path.toAbsolutePath().normalize().getParent());
+            val printer = new TraceClassVisitor(new PrintWriter(path.toFile()));
+            classNode.accept(printer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Добавить инструкции загрузки для аргументов.
      *
@@ -259,23 +281,14 @@ public class Reflectors {
      * @return опкод для загрузки данного типа.
      * @see Opcodes
      */
-    public int getLoadOpcodeForType(Type type) {
-        switch (type.getDescriptor()) {
-            case "I":
-            case "S":
-            case "B":
-            case "Z":
-            case "C":
-                return Opcodes.ILOAD;
-            case "J":
-                return Opcodes.LLOAD;
-            case "D":
-                return Opcodes.DLOAD;
-            case "F":
-                return Opcodes.FLOAD;
-            default:
-                return Opcodes.ALOAD;
-        }
+    public int getLoadOpcodeForType(@NotNull Type type) {
+        return switch (type.getDescriptor()) {
+            case "I", "S", "B", "Z", "C" -> Opcodes.ILOAD;
+            case "J" -> Opcodes.LLOAD;
+            case "D" -> Opcodes.DLOAD;
+            case "F" -> Opcodes.FLOAD;
+            default -> Opcodes.ALOAD;
+        };
     }
 
     /**
@@ -285,25 +298,15 @@ public class Reflectors {
      * @return опкод return'а для указанного типа.
      * @see Opcodes
      */
-    public int getReturnOpcodeFromType(Type type) {
-        switch (type.getDescriptor()) {
-            case "I":
-            case "S":
-            case "B":
-            case "C":
-            case "Z":
-                return Opcodes.IRETURN;
-            case "J":
-                return Opcodes.LRETURN;
-            case "D":
-                return Opcodes.DRETURN;
-            case "F":
-                return Opcodes.FRETURN;
-            case "V":
-                return Opcodes.RETURN;
-            default:
-                return Opcodes.ARETURN;
-        }
+    public int getReturnOpcodeFromType(@NotNull Type type) {
+        return switch (type.getDescriptor()) {
+            case "I", "S", "B", "C", "Z" -> Opcodes.IRETURN;
+            case "J" -> Opcodes.LRETURN;
+            case "D" -> Opcodes.DRETURN;
+            case "F" -> Opcodes.FRETURN;
+            case "V" -> Opcodes.RETURN;
+            default -> Opcodes.ARETURN;
+        };
     }
 
     // ====================
@@ -315,8 +318,10 @@ public class Reflectors {
      */
     public final BiMap<String, String> METHODS;
 
-    // TODO: Fields getters and setters
-//    public final BiMap<String, String> FIELDS;
+    /**
+     * Маппинги полей, где ключем является имя из маппингов, а значением имя из SRG.
+     */
+    public final BiMap<String, String> FIELDS;
 
     /***
      * Загрузить маппинги из файла ресурсов.
@@ -337,7 +342,7 @@ public class Reflectors {
                 splitted = line.split(",");
                 val mapped = splitted[0];
                 var unmapped = splitted[1];
-                while (METHODS.containsKey(unmapped)) // В данном случае я считаю StringBuilder избыточным,
+                while (target.containsKey(unmapped)) // В данном случае я считаю StringBuilder избыточным,
                     // так как повторок максимум одна-две на имя
                     unmapped += "*";
                 target.put(unmapped, mapped);
@@ -377,10 +382,9 @@ public class Reflectors {
         return result;
     }
 
-    // TODO: Fields getters and setters
-//    public @NotNull String unmapField(@NotNull String name) {
-//        return obfuscated ? FIELDS.getOrDefault(name, name) : name;
-//    }
+    public @NotNull String unmapField(@NotNull String name) {
+        return obfuscated ? FIELDS.getOrDefault(name, name) : name;
+    }
 
     /**
      * Преобразовать имя метода из маппингов в SRG
@@ -392,10 +396,15 @@ public class Reflectors {
         return obfuscated ? METHODS.inverse().getOrDefault(name, name).replace('*', ' ') : name;
     }
 
-    // TODO: Fields getters and setters
-//    public @NotNull String mapField(@NotNull String name) {
-//        return obfuscated ? FIELDS.inverse().getOrDefault(name, name) : name;
-//    }
+    /**
+     * Преобразовать имя поля из маппингов в SRG
+     *
+     * @param name имя поля для преобразования.
+     * @return преобразованное имя, либо оно само, если его нет в маппингах.
+     */
+    public @NotNull String mapField(@NotNull String name) {
+        return obfuscated ? FIELDS.inverse().getOrDefault(name, name) : name;
+    }
 
     // ====================
     // FMLLoadingPlugin адаптер
@@ -418,7 +427,7 @@ public class Reflectors {
             return null;
         }
 
-        public void injectData(Map<String, Object> data) {
+        public void injectData(@NotNull Map<String, Object> data) {
             obfuscated = ((Boolean) data.get("runtimeDeobfuscationEnabled"));
             if (obfuscated)
                 log("Obfuscated environment");
@@ -434,17 +443,14 @@ public class Reflectors {
     // ====================
     static {
         METHODS = HashBiMap.create();
-        // TODO: Fields getters and setters
-//        FIELDS = HashBiMap.create();
+        FIELDS = HashBiMap.create();
 
         // From FG mappers
         loadMappings(METHODS, "/methods.csv");
-        // TODO: Fields getters and setters
-//        loadMappings(FIELDS, "/fields.csv");
+        loadMappings(FIELDS, "/fields.csv");
 
         // Just UTF-8 file with "src,mapped" lines
         loadMappings(METHODS, "/methods.txt");
-        // TODO: Fields getters and setters
-//        loadMappings(FIELDS, "/fields.txt");
+        loadMappings(FIELDS, "/fields.txt");
     }
 }
